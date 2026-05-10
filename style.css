@@ -1,51 +1,81 @@
-html, body {
-    margin: 0; padding: 0;
-    background: var(--tg-bg);
-    color: var(--tg-text);
-    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-    height: 100%; overflow: hidden;
-    /* Критично для WebView: отключаем все жесты браузера */
-    touch-action: none;
-    -webkit-user-select: none;
+:root {
+    --bg: var(--tg-theme-bg-color, #ffffff);
+    --text: var(--tg-theme-text-color, #000000);
+    --btn: var(--tg-theme-button-color, #3390ec);
+    --btn-txt: var(--tg-theme-button-text-color, #ffffff);
+    --sec: var(--tg-theme-secondary-bg-color, #f0f0f0);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
     user-select: none;
+    -webkit-user-select: none;
 }
 
-.game-wrapper {
-    display: flex; flex-direction: column; align-items: center;
-    padding: 12px; max-width: 400px; margin: 0 auto; height: 100%;
+.wrapper {
+    width: 100%;
+    max-width: 340px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-/* Кнопки теперь точно кликабельны */
-#start-btn, .dir {
-    position: relative; z-index: 10;
-    touch-action: none;
-    -webkit-tap-highlight-color: transparent;
+.score { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+
+#game {
+    background: var(--sec);
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin-bottom: 15px;
+    display: block;
+}
+
+.btn-main {
+    background: var(--btn);
+    color: var(--btn-txt);
+    border: none;
+    padding: 12px 32px;
+    font-size: 17px;
+    font-weight: 600;
+    border-radius: 10px;
     cursor: pointer;
+    margin-bottom: 15px;
+    transition: opacity 0.15s;
 }
+.btn-main:active { opacity: 0.85; }
 
-#start-btn {
-    background: var(--tg-btn);
-    color: var(--tg-btn-text);
-    border: none; padding: 14px 28px;
-    font-size: 16px; font-weight: 600;
-    border-radius: 12px; margin-top: 12px;
-    transition: transform 0.1s, opacity 0.2s;
+.controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
 }
-#start-btn:active { transform: scale(0.96); opacity: 0.9; }
+.row { display: flex; gap: 6px; }
 
-.touch-pad {
-    display: none; flex-direction: column; align-items: center;
-    margin-top: 10px;
+.ctrl-btn {
+    background: var(--sec);
+    color: var(--text);
+    border: 1px solid rgba(128,128,128,0.25);
+    width: 56px;
+    height: 50px;
+    font-size: 22px;
+    border-radius: 10px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 }
-@media (hover: none) and (pointer: coarse) {
-    .touch-pad { display: flex; }
+.ctrl-btn:active { background: rgba(128,128,128,0.3); }
+
+/* На ПК скрываем тач-кнопки */
+@media (min-width: 768px) {
+    .controls { display: none; }
 }
-.dir {
-    background: var(--tg-sec);
-    color: var(--tg-text);
-    border: 1px solid rgba(128,128,128,0.3);
-    padding: 16px 0; margin: 4px;
-    font-size: 22px; border-radius: 10px;
-    min-width: 64px;
-}
-.row { display: flex; }
