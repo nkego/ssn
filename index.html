@@ -2,23 +2,15 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="var(--tg-theme-bg-color, #f5f5f5)">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Сапёр</title>
-    <!-- Ускоряем загрузку Telegram SDK -->
-    <link rel="preconnect" href="https://telegram.org" crossorigin>
     <link rel="stylesheet" href="style.css">
-    <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
-    <style>
-        /* Критический CSS для мгновенного первого кадра */
-        :root { --bg: var(--tg-theme-bg-color, #f5f5f5); --text: var(--tg-theme-text-color, #111); }
-        body { background: var(--bg); color: var(--text); margin: 0; font-family: system-ui; }
-        #loader { position: fixed; inset: 0; display: grid; place-items: center; background: var(--bg); color: #888; z-index: 999; }
-    </style>
+    <!-- SDK загружаем без defer, чтобы tg был доступен сразу -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <div id="loader">⏳</div>
-    <div id="app" style="display:none;">
+    <div id="loader">⏳ Загрузка...</div>
+    <div id="app" style="display: none;">
         <div id="header">
             <div class="stat" id="timer">⏱ 000</div>
             <div class="stat" id="mines-left">💣 10</div>
@@ -28,8 +20,8 @@
             <button id="mode-btn-flag">🚩</button>
         </div>
         <div id="grid"></div>
-        <button id="new-game">🔄</button>
+        <button id="new-game">🔄 Новая игра</button>
     </div>
-    <script src="script.js" defer></script>
+    <script src="script.js"></script>
 </body>
 </html>
