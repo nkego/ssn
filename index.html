@@ -3,26 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#ffffff">
     <title>Сапёр</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <div id="app">
+    <div id="loader">⏳ Загрузка...</div>
+    <div id="app" style="display:none;">
         <div id="header">
             <div class="stat" id="timer">⏱ 000</div>
             <div class="stat" id="mines-left">💣 10</div>
         </div>
-        
         <div id="controls">
             <button id="mode-btn" class="active" data-mode="open">⛏️ Копать</button>
             <button id="mode-btn-flag" data-mode="flag">🚩 Флаг</button>
         </div>
-
         <div id="grid"></div>
-        
         <button id="new-game">🔄 Новая игра</button>
     </div>
-    <script src="script.js"></script>
+    <script src="script.js" defer></script>
 </body>
 </html>
