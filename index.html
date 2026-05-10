@@ -5,25 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Змейка</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Загружаем SDK с defer, чтобы не блокировать рендер -->
-    <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
-    <div class="game-wrapper">
+    <div class="wrapper">
         <div class="score">Счёт: <span id="score">0</span></div>
-        <canvas id="game"></canvas>
+        <canvas id="game" width="300" height="300"></canvas>
+        <button id="start-btn" class="btn-main">▶ Старт</button>
         <div class="controls">
-            <button id="start-btn">▶ Старт</button>
-        </div>
-        <div class="touch-pad">
-            <button class="dir" data-dir="up">↑</button>
+            <button class="ctrl-btn" data-dir="up">↑</button>
             <div class="row">
-                <button class="dir" data-dir="left">←</button>
-                <button class="dir" data-dir="down">↓</button>
-                <button class="dir" data-dir="right">→</button>
+                <button class="ctrl-btn" data-dir="left">←</button>
+                <button class="ctrl-btn" data-dir="down">↓</button>
+                <button class="ctrl-btn" data-dir="right">→</button>
             </div>
         </div>
     </div>
-    <script src="script.js" defer></script>
+    <script src="script.js"></script>
 </body>
 </html>
