@@ -1,5 +1,10 @@
 const tg = window.Telegram.WebApp;
 
+// 🔑 1. Сразу сообщаем Telegram, что скрипт загружен
+tg.ready(); 
+tg.expand(); // Растягиваем до полного экрана без задержек
+tg.setHeaderColor('secondary_bg_color'); // Убираем белую вспышку при смене темы
+
 const ROWS = 9, COLS = 9, MINES = 10;
 let board, revealed, flagged, gameOver, firstClick, timer, time = 0;
 let mode = 'open';
@@ -13,6 +18,13 @@ const modeBtnFlag = document.getElementById('mode-btn-flag');
 const newGameBtn = document.getElementById('new-game');
 const loader = document.getElementById('loader');
 const app = document.getElementById('app');
+
+// 🔑 2. Инициализация в следующем тике, чтобы не блокировать main thread
+requestAnimationFrame(() => {
+    init();
+    loader.style.display = 'none';
+    app.style.display = 'block';
+});
 
 function init() {
     clearInterval(timer);
