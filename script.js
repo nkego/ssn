@@ -1,10 +1,10 @@
 const tg = window.Telegram.WebApp;
-tg.ready();
-tg.expand();
+tg.ready(); // Сообщаем Telegram, что скрипт готов, максимально рано
 
 const ROWS = 9, COLS = 9, MINES = 10;
 let board, revealed, flagged, gameOver, firstClick, timer, time = 0;
-let mode = 'open'; // 'open' | 'flag'
+let mode = 'open';
+let cells = []; // Кэш DOM-элементов для O(1) доступа
 
 const gridEl = document.getElementById('grid');
 const timerEl = document.getElementById('timer');
@@ -12,6 +12,8 @@ const minesEl = document.getElementById('mines-left');
 const modeBtn = document.getElementById('mode-btn');
 const modeBtnFlag = document.getElementById('mode-btn-flag');
 const newGameBtn = document.getElementById('new-game');
+const loader = document.getElementById('loader');
+const app = document.getElementById('app');
 
 function init() {
     clearInterval(timer);
@@ -26,17 +28,28 @@ function init() {
 }
 
 function renderGrid() {
-    gridEl.innerHTML = '';
+    // Генерация HTML одной строкой вместо 81 createElement
+    let html = '';
+    cells = new Array(ROWS * COLS);
     for (let r = 0; r < ROWS; r++) {
         for (let c = 0; c < COLS; c++) {
-            const cell = document.createElement('div');
-            cell.className = 'cell';
-            cell.dataset.r = r; cell.dataset.c = c;
-            cell.addEventListener('click', () => handleInteraction(r, c));
-            gridEl.appendChild(cell);
+            html += `<div class="cell" data-r="${r}" data-c="${c}"></div>`;
         }
     }
+    gridEl.innerHTML = html;
+    
+    // Кэшируем ссылки на элементы
+    gridEl.querySelectorAll('.cell').forEach(el => {
+        cells[parseInt(el.dataset.r) * COLS + parseInt(el.dataset.c)] = el;
+    });
 }
+
+// Делегирование событий: 1 обработчик вместо 81
+gridEl.addEventListener('click', (e) => {
+    const cell = e.target.closest('.cell');
+    if (!cell) return;
+    handleInteraction(parseInt(cell.dataset.r), parseInt(cell.dataset.c));
+});
 
 function handleInteraction(r, c) {
     if (gameOver || revealed[r][c]) return;
@@ -107,19 +120,23 @@ function revealCell(r, c) {
 }
 
 function updateCell(r, c) {
-    const cell = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+    const cell = cells[r * COLS + c];
     cell.className = 'cell';
     if (revealed[r][c]) {
         cell.classList.add('revealed');
-        if (board[r][c] === -1) cell.classList.add('mine');
-        if (board[r][c] > 0) {
+        if (board[r][c] === -1) {
+            cell.classList.add('mine');
+            cell.textContent = '💣';
+        } else if (board[r][c] > 0) {
             cell.textContent = board[r][c];
             cell.dataset.num = board[r][c];
-        } else if (board[r][c] === -1) {
-            cell.textContent = '💣';
+        } else {
+            cell.textContent = '';
+            delete cell.dataset.num;
         }
     } else {
         cell.textContent = '';
+        delete cell.dataset.num;
         if (flagged[r][c]) cell.classList.add('flagged');
     }
 }
@@ -165,4 +182,10 @@ function updateModeButtons() {
 newGameBtn.addEventListener('click', () => { init(); tg.HapticFeedback.impactOccurred('medium'); });
 tg.MainButton.onClick(() => { init(); tg.MainButton.hide(); });
 
+// Быстрая инициализация + плавное появление
 init();
+tg.expand(); // Вызываем после рендера, чтобы избежать скачка layout
+requestAnimationFrame(() => {
+    loader.classList.add('hidden');
+    app.classList.add('visible');
+});
