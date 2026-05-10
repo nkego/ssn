@@ -1,81 +1,62 @@
 :root {
-    --bg: var(--tg-theme-bg-color, #ffffff);
-    --text: var(--tg-theme-text-color, #000000);
-    --btn: var(--tg-theme-button-color, #3390ec);
-    --btn-txt: var(--tg-theme-button-text-color, #ffffff);
-    --sec: var(--tg-theme-secondary-bg-color, #f0f0f0);
+    --bg: var(--tg-theme-bg-color, #f5f5f5);
+    --text: var(--tg-theme-text-color, #111);
+    --hint: var(--tg-theme-hint-color, #888);
+    --btn-bg: var(--tg-theme-button-color, #2481cc);
+    --btn-text: var(--tg-theme-button-text-color, #fff);
+    --cell-bg: var(--tg-theme-secondary-bg-color, #e0e0e0);
+    --cell-revealed: var(--tg-theme-bg-color, #fff);
+    --cell-size: min(10.5vw, 42px);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-tap-highlight-color: transparent; }
 body {
     background: var(--bg);
     color: var(--text);
-    font-family: system-ui, -apple-system, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    overflow: hidden;
-    user-select: none;
-    -webkit-user-select: none;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; padding: 12px;
 }
+#app { max-width: 420px; width: 100%; text-align: center; }
+#header { display: flex; justify-content: space-around; margin-bottom: 12px; font-size: 18px; font-weight: 600; }
+.stat { background: var(--cell-bg); padding: 8px 14px; border-radius: 10px; min-width: 90px; }
 
-.wrapper {
-    width: 100%;
-    max-width: 340px;
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+#controls { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; }
+#controls button {
+    flex: 1; padding: 10px; border: none; border-radius: 10px;
+    background: var(--cell-bg); color: var(--text); font-size: 16px; cursor: pointer;
+    transition: 0.2s;
 }
+#controls button.active { background: var(--btn-bg); color: var(--btn-text); }
 
-.score { font-size: 18px; font-weight: 700; margin-bottom: 10px; }
-
-#game {
-    background: var(--sec);
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    margin-bottom: 15px;
-    display: block;
+#grid {
+    display: grid; grid-template-columns: repeat(9, var(--cell-size));
+    gap: 3px; margin: 0 auto; justify-content: center;
+    touch-action: manipulation;
 }
-
-.btn-main {
-    background: var(--btn);
-    color: var(--btn-txt);
-    border: none;
-    padding: 12px 32px;
-    font-size: 17px;
-    font-weight: 600;
-    border-radius: 10px;
-    cursor: pointer;
-    margin-bottom: 15px;
-    transition: opacity 0.15s;
+.cell {
+    width: var(--cell-size); height: var(--cell-size);
+    background: var(--cell-bg); border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: calc(var(--cell-size) * 0.6);
+    cursor: pointer; transition: 0.15s;
 }
-.btn-main:active { opacity: 0.85; }
+.cell:active { transform: scale(0.95); }
+.cell.revealed { background: var(--cell-revealed); }
+.cell.flagged { background: #ffe082; }
+.cell.mine { background: #ff5252; }
+.cell[data-num="1"] { color: #2196f3; }
+.cell[data-num="2"] { color: #4caf50; }
+.cell[data-num="3"] { color: #f44336; }
+.cell[data-num="4"] { color: #9c27b0; }
+.cell[data-num="5"] { color: #ff9800; }
+.cell[data-num="6"] { color: #00bcd4; }
+.cell[data-num="7"] { color: #795548; }
+.cell[data-num="8"] { color: #607d8b; }
 
-.controls {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
+#new-game {
+    margin-top: 16px; padding: 12px 24px; width: 100%;
+    background: var(--btn-bg); color: var(--btn-text);
+    border: none; border-radius: 12px; font-size: 17px; cursor: pointer;
 }
-.row { display: flex; gap: 6px; }
-
-.ctrl-btn {
-    background: var(--sec);
-    color: var(--text);
-    border: 1px solid rgba(128,128,128,0.25);
-    width: 56px;
-    height: 50px;
-    font-size: 22px;
-    border-radius: 10px;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
-}
-.ctrl-btn:active { background: rgba(128,128,128,0.3); }
-
-/* На ПК скрываем тач-кнопки */
-@media (min-width: 768px) {
-    .controls { display: none; }
-}
+#new-game:active { opacity: 0.85; }
