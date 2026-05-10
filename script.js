@@ -1,10 +1,9 @@
 const tg = window.Telegram.WebApp;
-tg.ready(); // Сообщаем Telegram, что скрипт готов, максимально рано
 
 const ROWS = 9, COLS = 9, MINES = 10;
 let board, revealed, flagged, gameOver, firstClick, timer, time = 0;
 let mode = 'open';
-let cells = []; // Кэш DOM-элементов для O(1) доступа
+let cells = [];
 
 const gridEl = document.getElementById('grid');
 const timerEl = document.getElementById('timer');
@@ -28,7 +27,6 @@ function init() {
 }
 
 function renderGrid() {
-    // Генерация HTML одной строкой вместо 81 createElement
     let html = '';
     cells = new Array(ROWS * COLS);
     for (let r = 0; r < ROWS; r++) {
@@ -37,14 +35,11 @@ function renderGrid() {
         }
     }
     gridEl.innerHTML = html;
-    
-    // Кэшируем ссылки на элементы
     gridEl.querySelectorAll('.cell').forEach(el => {
         cells[parseInt(el.dataset.r) * COLS + parseInt(el.dataset.c)] = el;
     });
 }
 
-// Делегирование событий: 1 обработчик вместо 81
 gridEl.addEventListener('click', (e) => {
     const cell = e.target.closest('.cell');
     if (!cell) return;
@@ -53,7 +48,7 @@ gridEl.addEventListener('click', (e) => {
 
 function handleInteraction(r, c) {
     if (gameOver || revealed[r][c]) return;
-    tg.HapticFeedback.impactOccurred('light');
+    if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
 
     if (mode === 'flag') {
         flagged[r][c] = !flagged[r][c];
@@ -150,10 +145,10 @@ function checkWin() {
 function endGame(win) {
     gameOver = true; clearInterval(timer);
     if (win) {
-        tg.HapticFeedback.notificationOccurred('success');
+        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
         tg.MainButton.setText('🎉 Победа! Играть снова').show();
     } else {
-        tg.HapticFeedback.notificationOccurred('error');
+        if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
         for (let r = 0; r < ROWS; r++)
             for (let c = 0; c < COLS; c++)
                 if (board[r][c] === -1) revealed[r][c] = true;
@@ -176,16 +171,17 @@ modeBtnFlag.addEventListener('click', () => { mode = 'flag'; updateModeButtons()
 function updateModeButtons() {
     modeBtn.classList.toggle('active', mode === 'open');
     modeBtnFlag.classList.toggle('active', mode === 'flag');
-    tg.HapticFeedback.selectionChanged();
+    if (tg.HapticFeedback) tg.HapticFeedback.selectionChanged();
 }
 
-newGameBtn.addEventListener('click', () => { init(); tg.HapticFeedback.impactOccurred('medium'); });
+newGameBtn.addEventListener('click', () => { init(); if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium'); });
 tg.MainButton.onClick(() => { init(); tg.MainButton.hide(); });
 
-// Быстрая инициализация + плавное появление
+// 🔑 Правильная инициализация
 init();
-tg.expand(); // Вызываем после рендера, чтобы избежать скачка layout
 requestAnimationFrame(() => {
     loader.classList.add('hidden');
     app.classList.add('visible');
+    tg.ready(); // Сообщаем Telegram, что интерфейс готов
+    tg.expand(); // Растягиваем на весь экран
 });
