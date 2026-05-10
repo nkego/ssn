@@ -1,13 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
     const tg = window.Telegram?.WebApp;
     if (!tg) {
-        console.error('❌ Telegram WebApp SDK не загружен');
+        console.error('❌ Telegram WebApp SDK не найден');
         return;
     }
 
-    // Сообщаем Telegram, что приложение готово
+    // Сообщаем Telegram, что интерфейс готов
     tg.ready();
     tg.expand();
+    tg.disableVerticalSwipes(); // Отключаем скролл страницы вниз для закрытия
 
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
@@ -31,11 +32,11 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
         ctx.fillStyle = '#e74c3c';
-        ctx.fillRect(food.x * TILE, food.y * TILE, TILE - 1, TILE - 1);
+        ctx.fillRect(food.x * TILE, food.y * TILE, TILE - 2, TILE - 2);
 
         snake.forEach((seg, i) => {
             ctx.fillStyle = i === 0 ? '#3390ec' : '#5dade2';
-            ctx.fillRect(seg.x * TILE, seg.y * TILE, TILE - 1, TILE - 1);
+            ctx.fillRect(seg.x * TILE, seg.y * TILE, TILE - 2, TILE - 2);
         });
     }
 
@@ -70,19 +71,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startGame() {
+        console.log('▶ Кнопка Старт нажата');
         if (isRunning) return;
+        
         snake = [{x: 10, y: 10}];
-        dx = 1; dy = 0;
+        dx = 1; dy = 0; // Начинаем движение вправо
         score = 0; scoreEl.textContent = 0;
         placeFood();
         isRunning = true;
         startBtn.textContent = '⏸ Игра идёт...';
+        
         if (gameLoop) clearInterval(gameLoop);
-        gameLoop = setInterval(() => { update(); draw(); }, 140);
+        gameLoop = setInterval(() => {
+            try {
+                update();
+                draw();
+            } catch (err) {
+                console.error('⚠️ Ошибка в игровом цикле:', err);
+                gameOver();
+            }
+        }, 140);
     }
 
-    // Кнопка старта
-    startBtn.addEventListener('click', startGame);
+    // Универсальный обработчик тапов (работает на iOS/Android/Desktop)
+    function bindInteractive(element, callback) {
+        element.addEventListener('pointerdown', (e) => {
+            e.preventDefault(); // Отключаем зум, скролл и двойные тапы
+            callback();
+        });
+        // Фоллбэк для старых браузеров
+        element.addEventListener('click', (e) => {
+            e.preventDefault();
+            callback();
+        });
+    }
+
+    bindInteractive(startBtn, startGame);
 
     // Клавиатура (ПК)
     document.addEventListener('keydown', e => {
@@ -93,10 +117,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'ArrowRight' && dx === 0) { dx = 1; dy = 0; }
     });
 
-    // Мобильные кнопки (используем click вместо touchstart)
+    // Мобильные кнопки
     document.querySelectorAll('.dir').forEach(btn => {
-        btn.addEventListener('click', e => {
-            e.preventDefault(); // Отменяем зум/скролл
+        bindInteractive(btn, () => {
             if (!isRunning) return;
             const dir = btn.dataset.dir;
             if (dir === 'up' && dy === 0) { dx = 0; dy = -1; }
@@ -106,5 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Первый рендер
     draw();
+    console.log('✅ Игра загружена. Ждём нажатия Старт...');
 });
