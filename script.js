@@ -2,118 +2,167 @@ const tg = window.Telegram.WebApp;
 tg.ready();
 tg.expand();
 
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-const scoreEl = document.getElementById('score');
-const startBtn = document.getElementById('start-btn');
+const ROWS = 9, COLS = 9, MINES = 10;
+let board, revealed, flagged, gameOver, firstClick, timer, time = 0;
+let mode = 'open'; // 'open' | 'flag'
 
-const GRID = 20;
-const TILE = 15; // 20 * 15 = 300px
+const gridEl = document.getElementById('grid');
+const timerEl = document.getElementById('timer');
+const minesEl = document.getElementById('mines-left');
+const modeBtn = document.getElementById('mode-btn');
+const modeBtnFlag = document.getElementById('mode-btn-flag');
+const newGameBtn = document.getElementById('new-game');
 
-let snake = [{x: 10, y: 10}];
-let food = {x: 5, y: 5};
-let dx = 0, dy = 0;
-let score = 0;
-let timer = null;
-let isPlaying = false;
-
-function draw() {
-    // Фон
-    ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--sec').trim() || '#f0f0f0';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Еда
-    ctx.fillStyle = '#e74c3c';
-    ctx.fillRect(food.x * TILE + 1, food.y * TILE + 1, TILE - 2, TILE - 2);
-
-    // Змейка
-    snake.forEach((seg, i) => {
-        ctx.fillStyle = i === 0 ? '#3390ec' : '#5dade2';
-        ctx.fillRect(seg.x * TILE + 1, seg.y * TILE + 1, TILE - 2, TILE - 2);
-    });
+function init() {
+    clearInterval(timer);
+    time = 0; timerEl.textContent = '⏱ 000';
+    minesEl.textContent = `💣 ${MINES}`;
+    gameOver = false; firstClick = true;
+    board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+    revealed = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+    flagged = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+    renderGrid();
+    tg.MainButton.hide();
 }
 
-function step() {
-    const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+function renderGrid() {
+    gridEl.innerHTML = '';
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.dataset.r = r; cell.dataset.c = c;
+            cell.addEventListener('click', () => handleInteraction(r, c));
+            gridEl.appendChild(cell);
+        }
+    }
+}
 
-    // Столкновение со стеной или собой
-    if (head.x < 0 || head.x >= GRID || head.y < 0 || head.y >= GRID || 
-        snake.some(s => s.x === head.x && s.y === head.y)) {
-        return stopGame();
+function handleInteraction(r, c) {
+    if (gameOver || revealed[r][c]) return;
+    tg.HapticFeedback.impactOccurred('light');
+
+    if (mode === 'flag') {
+        flagged[r][c] = !flagged[r][c];
+        updateCell(r, c);
+        const flags = flagged.flat().filter(Boolean).length;
+        minesEl.textContent = `💣 ${MINES - flags}`;
+        return;
     }
 
-    snake.unshift(head);
+    if (flagged[r][c]) return;
+    if (firstClick) {
+        placeMines(r, c);
+        calculateNumbers();
+        firstClick = false;
+        startTimer();
+    }
+    revealCell(r, c);
+    checkWin();
+}
 
-    // Съели еду
-    if (head.x === food.x && head.y === food.y) {
-        score++;
-        scoreEl.textContent = score;
-        if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-        placeFood();
+function placeMines(safeR, safeC) {
+    let placed = 0;
+    while (placed < MINES) {
+        const r = Math.floor(Math.random() * ROWS);
+        const c = Math.floor(Math.random() * COLS);
+        if (board[r][c] === -1) continue;
+        if (Math.abs(r - safeR) <= 1 && Math.abs(c - safeC) <= 1) continue;
+        board[r][c] = -1;
+        placed++;
+    }
+}
+
+function calculateNumbers() {
+    for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+            if (board[r][c] === -1) continue;
+            let count = 0;
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    const nr = r + dr, nc = c + dc;
+                    if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && board[nr][nc] === -1) count++;
+                }
+            }
+            board[r][c] = count;
+        }
+    }
+}
+
+function revealCell(r, c) {
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS || revealed[r][c] || flagged[r][c]) return;
+    revealed[r][c] = true;
+    updateCell(r, c);
+
+    if (board[r][c] === -1) {
+        endGame(false); return;
+    }
+    if (board[r][c] === 0) {
+        for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+                revealCell(r + dr, c + dc);
+            }
+        }
+    }
+}
+
+function updateCell(r, c) {
+    const cell = document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+    cell.className = 'cell';
+    if (revealed[r][c]) {
+        cell.classList.add('revealed');
+        if (board[r][c] === -1) cell.classList.add('mine');
+        if (board[r][c] > 0) {
+            cell.textContent = board[r][c];
+            cell.dataset.num = board[r][c];
+        } else if (board[r][c] === -1) {
+            cell.textContent = '💣';
+        }
     } else {
-        snake.pop();
+        cell.textContent = '';
+        if (flagged[r][c]) cell.classList.add('flagged');
     }
 }
 
-function placeFood() {
-    let newFood;
-    do {
-        newFood = {
-            x: Math.floor(Math.random() * GRID),
-            y: Math.floor(Math.random() * GRID)
-        };
-    } while (snake.some(s => s.x === newFood.x && s.y === newFood.y));
-    food = newFood;
+function checkWin() {
+    const safeCells = ROWS * COLS - MINES;
+    const opened = revealed.flat().filter(Boolean).length;
+    if (opened === safeCells) endGame(true);
 }
 
-function stopGame() {
-    clearInterval(timer);
-    isPlaying = false;
-    startBtn.textContent = '🔄 Заново';
-    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
-    tg.showAlert(`🐍 Игра окончена!\nСчёт: ${score}`);
+function endGame(win) {
+    gameOver = true; clearInterval(timer);
+    if (win) {
+        tg.HapticFeedback.notificationOccurred('success');
+        tg.MainButton.setText('🎉 Победа! Играть снова').show();
+    } else {
+        tg.HapticFeedback.notificationOccurred('error');
+        for (let r = 0; r < ROWS; r++)
+            for (let c = 0; c < COLS; c++)
+                if (board[r][c] === -1) revealed[r][c] = true;
+        for (let r = 0; r < ROWS; r++)
+            for (let c = 0; c < COLS; c++)
+                updateCell(r, c);
+        tg.MainButton.setText('💥 Взрыв! Новая игра').show();
+    }
 }
 
-function startGame() {
-    if (isPlaying) return;
-    
-    snake = [{x: 10, y: 10}];
-    dx = 1; dy = 0;
-    score = 0;
-    scoreEl.textContent = 0;
-    placeFood();
-    isPlaying = true;
-    startBtn.textContent = '⏸ В игре...';
-    
-    clearInterval(timer);
-    timer = setInterval(() => { step(); draw(); }, 150);
+function startTimer() {
+    timer = setInterval(() => {
+        time++;
+        timerEl.textContent = `⏱ ${String(time).padStart(3, '0')}`;
+    }, 1000);
 }
 
-// Кнопка старта
-startBtn.addEventListener('click', startGame);
-startBtn.addEventListener('touchstart', e => { e.preventDefault(); startGame(); }, {passive: false});
+modeBtn.addEventListener('click', () => { mode = 'open'; updateModeButtons(); });
+modeBtnFlag.addEventListener('click', () => { mode = 'flag'; updateModeButtons(); });
+function updateModeButtons() {
+    modeBtn.classList.toggle('active', mode === 'open');
+    modeBtnFlag.classList.toggle('active', mode === 'flag');
+    tg.HapticFeedback.selectionChanged();
+}
 
-// Клавиатура (ПК)
-document.addEventListener('keydown', e => {
-    if (!isPlaying) return;
-    if (e.key === 'ArrowUp' && dy === 0) { dx = 0; dy = -1; }
-    else if (e.key === 'ArrowDown' && dy === 0) { dx = 0; dy = 1; }
-    else if (e.key === 'ArrowLeft' && dx === 0) { dx = -1; dy = 0; }
-    else if (e.key === 'ArrowRight' && dx === 0) { dx = 1; dy = 0; }
-});
+newGameBtn.addEventListener('click', () => { init(); tg.HapticFeedback.impactOccurred('medium'); });
+tg.MainButton.onClick(() => { init(); tg.MainButton.hide(); });
 
-// Тач-кнопки (мгновенный отклик через pointerdown)
-document.querySelectorAll('.ctrl-btn').forEach(btn => {
-    btn.addEventListener('pointerdown', e => {
-        e.preventDefault(); // Блокирует зум/скролл
-        if (!isPlaying) return;
-        const d = btn.dataset.dir;
-        if (d === 'up' && dy === 0) { dx = 0; dy = -1; }
-        if (d === 'down' && dy === 0) { dx = 0; dy = 1; }
-        if (d === 'left' && dx === 0) { dx = -1; dy = 0; }
-        if (d === 'right' && dx === 0) { dx = 1; dy = 0; }
-    });
-});
-
-// Первая отрисовка
-draw();
+init();
